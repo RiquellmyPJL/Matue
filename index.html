@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MATUÉ | Tuezin do 085</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Inter:wght@300;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --accent: #8000ff;
+            --text: #ffffff;
+            --transition: all 0.6s cubic-bezier(0.2, 1, 0.3, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; cursor: none; }
+        
+        body { 
+            background-color: var(--bg); 
+            color: var(--text); 
+            font-family: 'Inter', sans-serif; 
+            transition: background-color 1.2s ease;
+            overflow-x: hidden;
+        }
+
+        /* Cursor Customizado */
+        #cursor {
+            width: 20px; height: 20px;
+            background: var(--accent);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            mix-blend-mode: screen;
+            filter: blur(4px);
+            transition: transform 0.1s ease-out, background 0.5s;
+        }
+
+        nav {
+            position: fixed; top: 0; width: 100%;
+            padding: 40px 60px;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 1000;
+        }
+        .logo { font-family: 'Syncopate', sans-serif; font-weight: 700; font-size: 20px; letter-spacing: 10px; }
+
+        /* Animação de Flutuação */
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(1deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+
+        .album-section {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 10%;
+            perspective: 2000px;
+        }
+
+        .album-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            align-items: center;
+            gap: 80px;
+            width: 100%;
+            max-width: 1300px;
+        }
+
+        .album-art {
+            display: flex;
+            justify-content: center;
+            transform-style: preserve-3d;
+            position: relative;
+        }
+
+        /* BRILHO ATRÁS DA CAPA */
+        .album-art img {
+            width: 100%;
+            max-width: 450px;
+            border-radius: 12px;
+            /* Drop-shadow cria o efeito de glow colorido usando a variável --accent */
+            filter: drop-shadow(0 0 30px var(--accent));
+            transition: transform 0.2s ease-out, filter 0.5s ease;
+            animation: float 5s ease-in-out infinite;
+            will-change: transform, filter;
+            z-index: 2;
+        }
+
+        .album-section:hover .album-art img {
+            /* Aumenta o brilho quando o mouse passa por cima */
+            filter: drop-shadow(0 0 60px var(--accent));
+        }
+
+        .album-info h2 {
+            font-family: 'Syncopate', sans-serif;
+            font-size: clamp(40px, 6vw, 90px);
+            line-height: 0.85;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .btn-stream {
+            display: inline-block;
+            padding: 18px 45px;
+            background: var(--accent);
+            color: #000;
+            text-decoration: none;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            border-radius: 100px;
+            cursor: pointer;
+            border: none;
+            font-size: 11px;
+            transition: 0.3s;
+        }
+
+        .btn-stream:hover {
+            transform: scale(1.1);
+            filter: brightness(1.2);
+            box-shadow: 0 0 30px var(--accent);
+        }
+
+        .nav-indicator {
+            position: fixed; right: 40px; top: 50%;
+            transform: translateY(-50%);
+            display: flex; flex-direction: column; gap: 20px;
+            z-index: 1000;
+        }
+        .dot { width: 8px; height: 8px; border: 1px solid rgba(255,255,255,0.3); border-radius: 50%; transition: 0.4s; }
+        .dot.active { background: var(--accent); border-color: var(--accent); transform: scale(2); }
+
+        #music-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.98);
+            z-index: 2000;
+            overflow-y: auto;
+            backdrop-filter: blur(40px);
+        }
+
+        .modal-container {
+            max-width: 800px;
+            margin: 80px auto;
+            padding: 40px 20px;
+        }
+
+        #close-modal {
+            background: none; border: none; color: white;
+            font-size: 60px; cursor: pointer;
+            position: fixed; top: 30px; right: 40px;
+            z-index: 2001;
+            line-height: 1;
+        }
+
+        .track-link {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 22px 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            transition: 0.4s;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+        }
+
+        .track-link:hover {
+            background: rgba(255,255,255,0.05);
+            color: var(--accent);
+            padding-left: 30px;
+        }
+
+        .track-number {
+            color: var(--accent);
+            font-weight: 900;
+            margin-right: 20px;
+            font-family: 'Syncopate';
+            font-size: 14px;
+        }
+
+        .track-name { font-weight: 600; font-size: 18px; }
+
+        @media (max-width: 900px) {
+            .album-content { grid-template-columns: 1fr; text-align: center; }
+            .album-art img { max-width: 300px; }
+            nav { padding: 20px; }
+            * { cursor: auto; }
+            #cursor { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="cursor"></div>
+
+    <nav>
+        <div class="logo">Tuezin do 085</div>
+    </nav>
+
+    <div class="nav-indicator">
+        <div class="dot active"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+    </div>
+
+    <section class="album-section" data-color="#76dfff" data-bg="#080c10" data-album="333">
+        <div class="album-content">
+            <div class="album-art"><img src="https://i.scdn.co/image/ab67616d0000b273996475bce560ead5737dbda1" alt="333"></div>
+            <div class="album-info">
+                <h2>333</h2>
+                <p>O retorno épico. Um álbum visual que explora novas texturas e a maturidade do Rei do Trap.</p><br>
+                <button class="btn-stream">Ver Tracklist Completa</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="album-section" data-color="#8000ff" data-bg="#0a0514" data-album="MAQUINA DO TEMPO">
+        <div class="album-content">
+            <div class="album-art"><img src="https://i.scdn.co/image/ab67616d0000b273a602766a53a1827a4b5ed315" alt="Máquina do Tempo"></div>
+            <div class="album-info">
+                <h2>MÁQUINA<br>DO TEMPO</h2>
+                <p>O disco que parou o Brasil. Sete faixas que definiram uma nova era estética e sonora.</p><br>
+                <button class="btn-stream">Ver Tracklist Completa</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="album-section" data-color="#ffffff" data-bg="#120505" data-album="XTRANHO">
+        <div class="album-content">
+            <div class="album-art"><img src="https://i.scdn.co/image/ab67616d0000b273f78ea8aae8a360d9def9e819" alt="Xtranho"></div>
+            <div class="album-info">
+                <h2>XTRANHO</h2>
+                <p>Dos singles colossais às colaborações globais. Onde o trap encontra o punk e o rock.</p><br>
+                <button class="btn-stream">Ver Maiores Hits</button>
+            </div>
+        </div>
+    </section>
+
+    <div id="music-modal">
+        <button id="close-modal">&times;</button>
+        <div class="modal-container">
+            <h2 id="modal-album-title" style="font-family: 'Syncopate'; margin-bottom: 40px; letter-spacing: 5px;"></h2>
+            <div id="track-list"></div>
+        </div>
+    </div>
+
+    <script>
+        const cursor = document.getElementById('cursor');
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+
+        const images = document.querySelectorAll('.album-art img');
+        document.addEventListener('mousemove', (e) => {
+            images.forEach(img => {
+                const rect = img.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                const rotateX = (centerY - y) / 12;
+                const rotateY = (x - centerX) / 12;
+
+                img.style.animation = 'none';
+                img.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`;
+            });
+        });
+
+        images.forEach(img => {
+            img.addEventListener('mouseleave', () => {
+                img.style.transform = `perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)`;
+                img.style.animation = 'float 5s ease-in-out infinite';
+            });
+        });
+
+        const albumData = {
+            "333": [
+                { name: "Crack com Musk", url: "https://www.youtube.com/watch?v=nXswujXzMnk" },
+                { name: "Imagina esse Cenário", url: "https://www.youtube.com/watch?v=Leep9KouXMo" },
+                { name: "Isso é Sério", url: "https://www.youtube.com/watch?v=d-6DzlhlBxA" },
+                { name: "1993", url: "https://www.youtube.com/watch?v=gyVmdwtvKwg" },
+                { name: "4Tal", url: "https://www.youtube.com/watch?v=mr_AunTy2pk" },
+                { name: "O Som", url: "https://www.youtube.com/watch?v=T-h3O3djG9U" },
+                { name: "04 AM", url: "https://www.youtube.com/watch?v=lcA7Pu9W_y0" },
+                { name: "Castlevania", url: "https://www.youtube.com/watch?v=9Zs5sA3FPbM&list=RD9Zs5sA3FPbM&start_radio=1" },
+                { name: "V de Vilão", url: "https://www.youtube.com/watch?v=G2i2419OHwY" },
+                { name: "Maria", url: "https://www.youtube.com/watch?v=-x2cE--r3L8" },
+                { name: "333", url: "https://www.youtube.com/watch?v=aq-DH4iwviE" },
+                { name: "Like This!", url: "https://www.youtube.com/watch?v=81z0TwCVyfs" }
+            ],
+            "MAQUINA DO TEMPO": [
+                { name: "Cogulândia", url: "https://www.youtube.com/watch?v=spIZM9Nnqa4&list=RDspIZM9Nnqa4&start_radio=1" },
+                { name: "Antes", url: "https://www.youtube.com/watch?v=yHqOj8sLl_c&list=RDyHqOj8sLl_c&start_radio=1" },
+                { name: "Gorilla Roxo", url: "https://www.youtube.com/watch?v=BUL7zecHZjA&list=RDBUL7zecHZjA&start_radio=1" },
+                { name: "Vem Chapar", url: "https://www.youtube.com/watch?v=F-k8Q45hJmg" },
+                { name: "777-666", url: "https://www.youtube.com/watch?v=d-GgZpCtBXw&list=RDd-GgZpCtBXw&start_radio=1" },
+                { name: "É Sal", url: "https://www.youtube.com/watch?v=hqG8ez2yn5Y&list=RDhqG8ez2yn5Y&start_radio=1" },
+                { name: "Máquina do Tempo", url: "https://www.youtube.com/watch?v=ZPcG9PCfagM&list=RDZPcG9PCfagM&start_radio=1" }
+            ],
+          "XTRANHO": [
+
+                { name: "Rei Tuê", url: "https://www.youtube.com/watch?v=U10obNU1E6o&list=RDU10obNU1E6o&start_radio=1" },
+                { name: "Talking Bout", url: "https://www.youtube.com/watch?v=NdzFjfO3lgM&list=RDNdzFjfO3lgM&start_radio=1" },
+                { name: "Meu Cemitério", url: "https://www.youtube.com/watch?v=bZ4q3PCYTcU&list=RDbZ4q3PCYTcU&start_radio=1" },
+                { name: "Ícone Fashion", url: "https://www.youtube.com/watch?v=-qLl5u_qmeU&list=RD-qLl5u_qmeU&start_radio=1" },
+                { name: "Autobahn", url: "https://www.youtube.com/watch?v=fcgAQJMCoi0&list=RDfcgAQJMCoi0&start_radio=1" },
+                { name: "Nananana", url: "https://www.youtube.com/watch?v=bYaPgCVhDXk&list=RDbYaPgCVhDXk&start_radio=1" },
+                { name: "Facas e Machados", url: "https://www.youtube.com/watch?v=Mbl3sXnaPs8&list=RDMbl3sXnaPs8&start_radio=1" },
+                { name: "Alterado", url: "https://www.youtube.com/watch?v=uTO7Dl2SE3g&list=RDuTO7Dl2SE3g&start_radio=1" },
+                { name: "Pensamentos Perigosos", url: "https://www.youtube.com/watch?v=2vuicp7ynxY&list=RD2vuicp7ynxY&start_radio=1" },
+                { name: "Xtranho", url: "https://www.youtube.com/watch?v=Z3_jY015bsE&list=RDZ3_jY015bsE&start_radio=1" },
+                { name: "Backstage", url: "https://www.youtube.com/watch?v=2O-rjMl_iQA&list=RD2O-rjMl_iQA&start_radio=1" },
+                { name: "Todas as Luzes", url: "https://www.youtube.com/watch?v=iNjKv6QtcVw&list=RDiNjKv6QtcVw&start_radio=1" },
+                { name: "Os Melhores", url: "https://www.youtube.com/watch?v=wc9UwhMyJfQ&list=RDwc9UwhMyJfQ&start_radio=1" },
+
+            ]
+        };
+
+        const modal = document.getElementById('music-modal');
+        const trackList = document.getElementById('track-list');
+        const modalTitle = document.getElementById('modal-album-title');
+
+        document.querySelectorAll('.btn-stream').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const albumKey = btn.closest('.album-section').getAttribute('data-album');
+                const tracks = albumData[albumKey];
+                modalTitle.innerText = albumKey.replace('MAQUINA', 'MÁQUINA');
+                trackList.innerHTML = tracks.map((t, i) => `
+                    <a href="${t.url}" target="_blank" class="track-link">
+                        <span><span class="track-number">${(i+1).toString().padStart(2, '0')}</span> <span class="track-name">${t.name}</span></span>
+                        <small style="opacity: 0.5;">OUVIR AGORA ↗</small>
+                    </a>`).join('');
+                modal.style.display = 'block';
+                document.body.style.overflow = 'hidden';
+            });
+        });
+
+        document.getElementById('close-modal').onclick = () => {
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        };
+
+        const sections = document.querySelectorAll('.album-section');
+        const dots = document.querySelectorAll('.dot');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const color = entry.target.getAttribute('data-color');
+                    const bg = entry.target.getAttribute('data-bg');
+                    document.documentElement.style.setProperty('--accent', color);
+                    document.documentElement.style.setProperty('--bg', bg);
+                    const idx = Array.from(sections).indexOf(entry.target);
+                    dots.forEach(d => d.classList.remove('active'));
+                    dots[idx].classList.add('active');
+                }
+            });
+        }, { threshold: 0.6 });
+        sections.forEach(s => observer.observe(s));
+    </script>
+</body>
+</html>
